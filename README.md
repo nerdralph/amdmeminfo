@@ -1,11 +1,11 @@
-#amdmeminfo
+# amdmeminfo
 
 
 Get GDDR5 memory information from AMD Radeon GPUs.  Includes memory timing.
 
 ---
 
-###Installation
+### Installation
 
 * Download and unzip or git clone: `git clone https://github.com/sling00/amdmeminfo`
 * `cd amdmeminfo`
@@ -16,7 +16,7 @@ Get GDDR5 memory information from AMD Radeon GPUs.  Includes memory timing.
 
 ---
 
-###Usage
+### Usage
 
 `./amdmeminfo [options]`
 
