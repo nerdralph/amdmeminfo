@@ -1,7 +1,7 @@
 #amdmeminfo
 
 
-Get GDDR5 memory information and other information from AMD Radeon GPUs.
+Get GDDR5 memory information from AMD Radeon GPUs.  Includes memory timing.
 
 ---
 
@@ -23,6 +23,7 @@ Get GDDR5 memory information and other information from AMD Radeon GPUs.
 `./amdmeminfo [options]`
 
 Options:
+* `-c` `--memconfig` Output memory configuration and timing
 * `-h` `--help` Display Help
 * `-o` `--opencl` Order by OpenCL ID (cgminer/sgminer GPU order)
 * `-q` `--quiet` Only output results
