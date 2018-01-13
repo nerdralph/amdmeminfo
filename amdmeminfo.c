@@ -1,6 +1,7 @@
 /*
  * AMDMemInfo, (c) 2014 by Zuikkis <zuikkis@gmail.com>
  * Updated by Yann St.Arnaud <ystarnaud@gmail.com>
+ * Updated 2018 by Ralph Doncaster github.com/nerdralph
  *
  * Loosely based on "amdmeminfo" by Joerie de Gram.
  *
@@ -37,8 +38,10 @@
 #include <CL/cl_ext.h>
 #endif
 
+#include "gmc.h"
+
 #define VERSION "AMDMemInfo by Zuikkis <zuikkis@gmail.com>\n" \
-      "Updated by Yann St.Arnaud <ystarnaud@gmail.com>"
+      "Updated by Yann St.Arnaud <ystarnaud@gmail.com> and Nerd Ralph"
 
 #define LOG_INFO 1
 #define LOG_ERROR 2
@@ -47,6 +50,10 @@
 #define MEM_HBM  0x6
 
 #define mmMC_SEQ_MISC0 0xa80
+#define mmMC_SEQ_RAS_TIMING 0xa28
+#define mmMC_SEQ_CAS_TIMING 0xa29
+#define mmMC_SEQ_MISC_TIMING2 0xa2b
+#define mmMC_ARB_DRAM_TIMING 0x9dd
 #define mmMC_SEQ_MISC0_FIJI 0xa71
 
 #define BLANK_BIOS_VER "xxx-xxx-xxxx"
@@ -405,7 +412,8 @@ typedef struct gpu {
   u16 vendor_id, device_id;
   gputype_t *gpu;
   memtype_t *mem;
-  int memconfig, mem_type, mem_manufacturer, mem_model;
+  int memconfig, ras_t, cas_t, misc_t2, arb_dram, mem_type,
+      mem_manufacturer, mem_model;
   u8 pcibus, pcidev, pcifunc, pcirev;
   int opencl_id;
   u32 subvendor, subdevice;
@@ -711,6 +719,45 @@ static void get_bios_version(gpu_t *gpu)
   }
 }
 
+// print memory timing
+static void print_timing(gpu_t *gpu)
+{
+    SEQ_RAS_TIMING* ras_t = (SEQ_RAS_TIMING*)&(gpu->ras_t);
+	printf("SEQ_RAS_TIMING:\n");
+	printf("TRCDW=%d ", ras_t->TRCDW);
+	printf("TRCDWA=%d ", ras_t->TRCDWA);
+	printf("TRCDR=%d ", ras_t->TRCDR);
+	printf("TRCDRA=%d ", ras_t->TRCDRA);
+	printf("TRRD=%d ", ras_t->TRRD);
+	printf("TRC=%d\n", ras_t->TRC);
+
+    SEQ_CAS_TIMING* cas_t = (SEQ_CAS_TIMING*)&(gpu->cas_t);
+	printf("SEQ_CAS_TIMING:\n");
+	printf("TNOPW=%d ", cas_t->TNOPW);
+	printf("TNOPR=%d ", cas_t->TNOPR);
+	printf("TR2W=%d ", cas_t->TR2W);
+	printf("TCCDL=%d ", cas_t->TCCDL);
+	printf("TR2R=%d ", cas_t->TR2R);
+	printf("TW2R=%d ", cas_t->TW2R);
+	printf("TCL=%d\n", cas_t->TCL);
+
+    SEQ_MISC_TIMING2* misc_t2 = (SEQ_MISC_TIMING2*)&(gpu->misc_t2);
+	printf("SEQ_MISC_TIMING2:\n");
+	printf("PA2RDATA=%d ", misc_t2->PA2RDATA);
+	printf("PA2WDATA=%d ", misc_t2->PA2WDATA);
+	printf("TFAW=%d ", misc_t2->TFAW);
+	printf("TREDC=%d ", misc_t2->TREDC);
+	printf("TWEDC=%d ", misc_t2->TWEDC);
+	printf("T32AW=%d\n", misc_t2->T32AW);
+	
+    ARB_DRAM_TIMING* arb_dram = (ARB_DRAM_TIMING*)&(gpu->arb_dram);
+	printf("ARB_DRAM_TIMING:\n");
+	printf("ACTRD=%d ", arb_dram->ACTRD);
+	printf("ACTWR=%d ", arb_dram->ACTWR);
+	printf("RASMACTRD=%d ", arb_dram->RASMACTRD);
+	printf("RASMACTWR=%d\n", arb_dram->RASMACTWR);
+} 
+
 /*
  * Find all suitable cards, then find their memory space and get memory information.
  */
@@ -783,6 +830,10 @@ int main(int argc, char *argv[])
               else {
                 meminfo = pcimem[mmMC_SEQ_MISC0];
               }
+              d->ras_t= pcimem[mmMC_SEQ_RAS_TIMING];
+              d->cas_t= pcimem[mmMC_SEQ_CAS_TIMING];
+              d->misc_t2= pcimem[mmMC_SEQ_MISC_TIMING2];
+              d->arb_dram= pcimem[mmMC_ARB_DRAM_TIMING];
 
               mem_type = (meminfo & 0xf0000000) >> 28;
               manufacturer = (meminfo & 0xf00) >> 8;
@@ -889,6 +940,7 @@ int main(int argc, char *argv[])
 
         if (opt_show_memconfig) {
           printf("Memory Configuration: 0x%x\n", d->memconfig);
+          print_timing(d);
         }
 
         printf("Memory Type: %s\n", mem_type_label[d->mem->type]);
