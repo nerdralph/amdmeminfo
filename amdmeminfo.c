@@ -52,6 +52,7 @@
 #define mmMC_SEQ_MISC0 0xa80
 #define mmMC_SEQ_RAS_TIMING 0xa28
 #define mmMC_SEQ_CAS_TIMING 0xa29
+#define mmMC_SEQ_MISC_TIMING 0xa2a
 #define mmMC_SEQ_MISC_TIMING2 0xa2b
 #define mmMC_ARB_DRAM_TIMING 0x9dd
 #define mmMC_SEQ_MISC0_FIJI 0xa71
@@ -412,7 +413,7 @@ typedef struct gpu {
   u16 vendor_id, device_id;
   gputype_t *gpu;
   memtype_t *mem;
-  int memconfig, ras_t, cas_t, misc_t2, arb_dram, mem_type,
+  int memconfig, ras_t, cas_t, misc_t, misc_t2, arb_dram, mem_type,
       mem_manufacturer, mem_model;
   u8 pcibus, pcidev, pcifunc, pcirev;
   int opencl_id;
@@ -741,6 +742,13 @@ static void print_timing(gpu_t *gpu)
 	printf("TW2R=%d ", cas_t->TW2R);
 	printf("TCL=%d\n", cas_t->TCL);
 
+    SEQ_MISC_TIMING* misc_t = (SEQ_MISC_TIMING*)&(gpu->misc_t);
+	printf("SEQ_MISC_TIMING:\n");
+	printf("TRP_WRA=%d ", misc_t->TRP_WRA);
+	printf("TRP_RDA=%d ", misc_t->TRP_RDA);
+	printf("TRP=%d ", misc_t->TRP);
+	printf("TRFC=%d\n", misc_t->TRFC);
+
     SEQ_MISC_TIMING2* misc_t2 = (SEQ_MISC_TIMING2*)&(gpu->misc_t2);
 	printf("SEQ_MISC_TIMING2:\n");
 	printf("PA2RDATA=%d ", misc_t2->PA2RDATA);
@@ -832,6 +840,7 @@ int main(int argc, char *argv[])
               }
               d->ras_t= pcimem[mmMC_SEQ_RAS_TIMING];
               d->cas_t= pcimem[mmMC_SEQ_CAS_TIMING];
+              d->misc_t= pcimem[mmMC_SEQ_MISC_TIMING];
               d->misc_t2= pcimem[mmMC_SEQ_MISC_TIMING2];
               d->arb_dram= pcimem[mmMC_ARB_DRAM_TIMING];
 
